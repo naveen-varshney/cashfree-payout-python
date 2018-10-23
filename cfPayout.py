@@ -9,11 +9,11 @@ import requests
 class cashfreeUser:
 
     token = None
-    
+
     clientId = None
     clientSecret = None
     stage = None
-    expiry = None 
+    expiry = None
 
     def clientAuth(self, clientId, clientSecret, stage):
 
@@ -28,7 +28,7 @@ class cashfreeUser:
 
         headers = {
         'X-Client-Id' : clientId,
-        'X-Client-Secret' : clientSecret 
+        'X-Client-Secret' : clientSecret
         }
         try:
             jsonData = requests.post(url = linkAuthorize, headers = headers)
@@ -45,12 +45,12 @@ class cashfreeUser:
     def expiryCheck(self):
 
         currenttime = int(time.time())
-        if (cashfreeUser.expiry != None) : 
+        if (cashfreeUser.expiry != None) :
             expirytime = int(cashfreeUser.expiry)
-        else : 
+        else :
             return "Empty JSON response. Cannot perform expiry check."
 
-        #makes check for if the token expires within the next minute and generates a new one 
+        #makes check for if the token expires within the next minute and generates a new one
         if (currenttime - expirytime < 60):
 
             temp = cashfreeUser()
@@ -58,12 +58,12 @@ class cashfreeUser:
         else:
             return None
 
-    def addBeneficiary(self,beneId, name, email, phone, bankAccount, ifsc, address1,address2,vpa, city, state, pincode):
+    def addBeneficiary(self,beneId, name, email, phone, bankAccount, ifsc,city, state, pincode,address1,address2="",vpa=""):
 
-        if ((beneId == None) or (name == None) or (email == None) or ( phone == None) or ( address1 == None)):
-            return "Mandatory parameters missing" 
-        else : 
-            userParam = {   
+        if ((beneId is None) or (name is None) or (email is None) or ( phone is None) or ( address1 is None)):
+            return "Mandatory parameters missing"
+        else :
+            userParam = {
                 "beneId" : beneId,
                 "name" : name,
                 "email" : email ,
@@ -71,7 +71,7 @@ class cashfreeUser:
                 "bankAccount" : bankAccount, #optional
                 "ifsc" : ifsc, #ptional
                 "vpa" : vpa,
-                "address1" : address1,               
+                "address1" : address1,
                 "address2" : address2, #//optional
                 "city" : city, #//optional
                 "state" : state, #//optional
@@ -84,7 +84,7 @@ class cashfreeUser:
 
             if (cashfreeUser.stage == "TEST"):
                 linkAddBeneficiary  = "https://payout­-gamma.cashfree.com/payout/v1/addBeneficiary"
-            
+
             elif (cashfreeUser.stage == "PROD"):
                 linkAddBeneficiary  = "https://payout­-api.cashfree.com/payout/v1/addBeneficiary"
 
@@ -92,14 +92,15 @@ class cashfreeUser:
                 'Content-Type': "application/json",
                 'Authorization': "Bearer " +  str(cashfreeUser.token)
             }
-            try : 
+            try :
                 jsonData = requests.post(url = linkAddBeneficiary, headers = headers, data = json.dumps(userParam))
                 jsonData = json.loads(jsonData.text)
 
                 return jsonData
-            
+
             except:
-                return "Empty JSON response"
+                logger.info("exception while creating beneficiary",exc_info=True)
+                return None
 
     def getBalance(self):
 
@@ -114,25 +115,25 @@ class cashfreeUser:
             linkAddBeneficiary  = "https://payout-gamma.cashfree.com/payout/v1/getBalance"
         elif (cashfreeUser.stage == "PROD"):
             linkAddBeneficiary  = "https://payout-api.cashfree.com/payout/v1/getBalance"
-        
+
         try:
             jsonData = requests.get(url = linkAddBeneficiary, headers = headers)
             jsonData = json.loads(jsonData.text)
-            
+
             return jsonData
         except:
             return "Empty JSON response"
-    
-    def requestTransfer(self,beneId, amount, transferId, transferMode, remarks):
-        
-        if ((beneId == None) or (amount == None) or (transferId == None)):
-            return "Mandatory parameters missing" 
-        
-        else : 
+
+    def requestTransfer(self,beneId, amount, transferId, transferMode="banktransfer", remarks=""):
+
+        if ((beneId is None) or (amount is None) or (transferId is None)):
+            return "Mandatory parameters missing"
+
+        else :
 
             userRequestParam = {
                 "beneId" : beneId,
-                "amount" : amount, 
+                "amount" : amount,
                 "transferId" : transferId,
                 "transferMode" : transferMode, #//optional
                 "remarks" : remarks# //optional
@@ -151,7 +152,7 @@ class cashfreeUser:
             }
             try:
                 jsonData = requests.post(url = linkRequestTransfer, headers = headers, data = json.dumps(userRequestParam))
-                
+
                 jsonData = json.loads(jsonData.text)
                 return jsonData
 
@@ -160,22 +161,22 @@ class cashfreeUser:
 
     def getTransferStatus(self, transferId):
 
-        if transferId == None :
+        if transferId is None :
             return "Mandatory parameters missing"
         else :
 
             temp = cashfreeUser()
             temp.expiryCheck()
-            
+
             if (cashfreeUser.stage == "TEST"):
                 linkTransferStatus = "https://payout-gamma.cashfree.com/payout/v1/getTransferStatus" + "?transferId="+transferId
             elif (cashfreeUser.stage == "PROD"):
-                linkTransferStatus = "https://payout-api.cashfree.com/payout/v1/getTransferStatus" + "?transferId="+transferId  
+                linkTransferStatus = "https://payout-api.cashfree.com/payout/v1/getTransferStatus" + "?transferId="+transferId
 
             headers = {
                 'Authorization': "Bearer " +  str(cashfreeUser.token),
                 'transferId' : str(transferId)
-            }              
+            }
 
             try:
                 jsonData = requests.get(url = linkTransferStatus, headers = headers)
@@ -187,14 +188,14 @@ class cashfreeUser:
 
     def bankDetailsValidation(self, name, phone, bankAccount,  ifsc):
 
-        if ((name == None) or (phone == None) or (bankAccount == None) or (ifsc == None)):
-            return "Mandatory parameters missing" 
-        
-        else : 
+        if ((name is None) or (phone is None) or (bankAccount is None) or (ifsc is None)):
+            return "Mandatory parameters missing"
+
+        else :
 
             temp = cashfreeUser()
             temp.expiryCheck()
-            
+
             if (cashfreeUser.stage == "TEST"):
                 linkBankValidation = "https://payout-gamma.cashfree.com/payout/v1/validation/bankDetails" + "?name=" + name + "&phone=" + phone + "&bankAccount=" + bankAccount + "&ifsc=" + ifsc
             elif (cashfreeUser.stage == "PROD"):
@@ -206,15 +207,10 @@ class cashfreeUser:
                 'bankAccount' : bankAccount,
                 'ifsc' : ifsc
             }
-            try : 
+            try :
                 jsonData = requests.get(url = linkBankValidation, headers = headers)
 
                 jsonData = json.loads(jsonData.text)
                 return jsonData
             except:
                 return "Empty JSON response"
-
-
-
-
-
